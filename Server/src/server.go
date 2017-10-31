@@ -10,10 +10,11 @@ import (
 
 const (
 	CONN_HOST = "localhost"
-	CONN_PORT = "3333"
+	CONN_PORT = "8070"
 	CONN_TYPE = "tcp"
 	MAX_DATA_RECV = 9999
 	BACKLOG = 50
+	IP = "134.226.214.254"
 )
 
 func main() {
@@ -107,20 +108,21 @@ func handleRequest(conn net.Conn) {
 
 func getIpAddress() string{
 
-	ifaces, _ := net.Interfaces()
-	// handle err
-	for _, i := range ifaces {
-		addrs, _ := i.Addrs()
-		// handle err
-		for _, addr := range addrs {
-			var ip net.IP
-			switch v := addr.(type) {
-			case *net.IPNet:
-				ip = v.IP
-			case *net.IPAddr:
-				ip = v.IP
-			}
-			return ip.String()
+	netInterfaceAddresses, err := net.InterfaceAddrs()
+
+	if err != nil { return "" }
+
+	for _, netInterfaceAddress := range netInterfaceAddresses {
+
+		networkIp, ok := netInterfaceAddress.(*net.IPNet)
+
+		if ok && !networkIp.IP.IsLoopback() && networkIp.IP.To4() != nil {
+
+			ip := networkIp.IP.String()
+
+			fmt.Println("Resolved Host IP: " + ip)
+
+			return ip
 		}
 	}
 	return ""
