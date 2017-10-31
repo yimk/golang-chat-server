@@ -1,4 +1,4 @@
-package lib
+package chatroom
 
 import (
 	"fmt"
@@ -24,7 +24,7 @@ var usersCorrespondingGroup [][]int
 var usersConns []net.Conn
 
 
-func requestJoinChatroom(request string, clientConn net.Conn, port string) bool{
+func RequestJoinChatroom(request string, clientConn net.Conn, port string) bool{
 
 	// Parse request for essential information
 	var requestLines = strings.Split(request, "\n")
@@ -54,7 +54,7 @@ func requestJoinChatroom(request string, clientConn net.Conn, port string) bool{
 	return true
 }
 
-func requestLeavingChatroom(request string,clientConn net.Conn, serverPort string) bool{
+func RequestLeavingChatroom(request string,clientConn net.Conn, serverPort string) bool{
 
 	//Parse request for essential information
 	requestLines := strings.Split(request, "\n")
@@ -77,7 +77,7 @@ func requestLeavingChatroom(request string,clientConn net.Conn, serverPort strin
 }
 
 
-func requestSendMessage(request string, clientConn net.Conn, serverPort string) bool {
+func RequestSendMessage(request string, clientConn net.Conn, serverPort string) bool {
 
 	//Parse request for essential information
 	requestLines := strings.Split(request, "\n")
@@ -91,7 +91,7 @@ func requestSendMessage(request string, clientConn net.Conn, serverPort string) 
 	return true
 }
 
-func requestDisconnect(request string, clientConn net.Conn, serverPort string) bool{
+func RequestDisconnect(request string, clientConn net.Conn, serverPort string) bool{
 
 	// Parse request for essential information
 	requestLines := strings.Split(request, "\n")
@@ -114,7 +114,7 @@ func requestDisconnect(request string, clientConn net.Conn, serverPort string) b
 }
 
 
-func kill(){
+func Kill(){
 	for _, c := range usersConns {
 		c.Write([]byte("Killing the service!"))
 		c.Close()

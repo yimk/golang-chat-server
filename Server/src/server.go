@@ -5,7 +5,7 @@ import (
 	"net"
 	"os"
 	"strings"
-	"src/lib"
+	"../src/chatroom"
 )
 
 const (
@@ -16,11 +16,9 @@ const (
 	BACKLOG = 50
 )
 
-//var chatroom = Chatroom()
-
-
-
 func main() {
+
+	fmt.Println("Start!\nIP:", getIpAddress())
 
 	// Listen for incoming connections.
 	l, err := net.Listen(CONN_TYPE, CONN_HOST+":"+CONN_PORT)
@@ -62,7 +60,7 @@ func handleRequest(conn net.Conn) {
   	if(strings.Compare(request, "KILL_SERVICE\n") == 1) {
 
 	  	fmt.Printf("Kill the service\n" )
-	  	//chatroom.kill()
+	  	chatroom.Kill()
 	  	conn.Close()
 
    	} else if(strings.Compare(request, "HELO text\n") == 1) {
@@ -78,22 +76,22 @@ func handleRequest(conn net.Conn) {
    	} else if(strings.Contains(request, "JOIN_CHATROOM")) {
 
    		fmt.Printf("It is a JOIN CHATROOM REQUEST\n") 
-		//chatroom.requestJoinChatroom(request, conn, CONN_PORT)
+		chatroom.RequestJoinChatroom(request, conn, CONN_PORT)
 
    	} else if(strings.Contains(request, "LEAVE_CHATROOM")) {
 
    		fmt.Printf("It is a LEAVE CHATROOM REQUEST\n") 
-		//chatroom.requestLeavingChatroom(request, conn, CONN_PORT)
+		chatroom.RequestLeavingChatroom(request, conn, CONN_PORT)
 
    	} else if(strings.Contains(request, "CHAT")) {
 
    		fmt.Printf("It is a JOIN CHATROOM REQUEST\n") 
-		//chatroom.requestSendMessage(request, conn, CONN_PORT)
+		chatroom.RequestSendMessage(request, conn, CONN_PORT)
 
    	} else if(strings.Compare(request, "DISCONNECT") == 1) {
 
    		fmt.Printf("It is a LEAVE CHATROOM REQUEST\n") 
-		//chatroom.requestDisconnect(request, conn, CONN_PORT)
+		chatroom.RequestDisconnect(request, conn, CONN_PORT)
 
    	} else {
 
