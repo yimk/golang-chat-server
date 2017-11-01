@@ -6,6 +6,8 @@ import (
 	"os"
 	"strings"
 	"../src/chatroom"
+	"strconv"
+	"log"
 )
 
 const (
@@ -18,36 +20,34 @@ const (
 )
 
 var (
-	CONN_PORT = "8070"
+	port = "8070"
 )
 
 func main() {
 
-	CONN_PORT = os.Args[1]
+	port = os.Args[1]
 	fmt.Println("Start!\nIP:", getIpAddress())
 
-	// Listen for incoming connections.
-	l, err := net.Listen(CONN_TYPE, CONN_HOST+":"+CONN_PORT)
+	listen, err := net.Listen("tcp4", ":"+port)
+	defer listen.Close()
 	if err != nil {
-		fmt.Println("Error listening:", err.Error())
+		log.Fatalf("Socket listen port %d failed,%s", port, err)
 		os.Exit(1)
 	}
+	log.Printf("Begin listen port: %d", port)
 
-	// Close the listener when the application closes.
-	defer l.Close()
-	fmt.Println("Listening on " + CONN_HOST + ":" + CONN_PORT)
 	for {
-		// Listen for an incoming connection.
-		conn, err := l.Accept()
+		conn, err := listen.Accept()
 		if err != nil {
-			fmt.Println("Error accepting: ", err.Error())
-			os.Exit(1)
+			log.Fatalln(err)
+			continue
 		}
-		// Handle connections in a new goroutine.
 		go handleRequest(conn)
 	}
 	
 }
+
+
 
 // Handles incoming requests.
 func handleRequest(conn net.Conn) {
@@ -74,7 +74,7 @@ func handleRequest(conn net.Conn) {
    		fmt.Printf("Send back Hello\n" )
    		//"HELO text\nIP:[ip address]\nPort:[port number]\nStudentID:[your student ID]\n"
 		ip := getIpAddress()
-		returnMessage := "HELO text\nIP::" + ip + "\nPort:" + CONN_PORT + "\nStudentID:" + "13329643" + "\n"
+		returnMessage := "HELO text\nIP::" + ip + "\nPort:" + port + "\nStudentID:" + "13329643" + "\n"
 		fmt.Printf(returnMessage)
 		conn.Write([]byte(returnMessage))
 		fmt.Printf(request)
@@ -82,22 +82,22 @@ func handleRequest(conn net.Conn) {
    	} else if(strings.Contains(request, "JOIN_CHATROOM")) {
 
    		fmt.Printf("It is a JOIN CHATROOM REQUEST\n") 
-		chatroom.RequestJoinChatroom(request, conn, CONN_PORT)
+		chatroom.RequestJoinChatroom(request, conn, port)
 
    	} else if(strings.Contains(request, "LEAVE_CHATROOM")) {
 
    		fmt.Printf("It is a LEAVE CHATROOM REQUEST\n") 
-		chatroom.RequestLeavingChatroom(request, conn, CONN_PORT)
+		chatroom.RequestLeavingChatroom(request, conn, port)
 
    	} else if(strings.Contains(request, "CHAT")) {
 
    		fmt.Printf("It is a JOIN CHATROOM REQUEST\n") 
-		chatroom.RequestSendMessage(request, conn, CONN_PORT)
+		chatroom.RequestSendMessage(request, conn, port)
 
    	} else if(strings.Compare(request, "DISCONNECT") == 1) {
 
    		fmt.Printf("It is a LEAVE CHATROOM REQUEST\n") 
-		chatroom.RequestDisconnect(request, conn, CONN_PORT)
+		chatroom.RequestDisconnect(request, conn, port)
 
    	} else {
 
