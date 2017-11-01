@@ -12,21 +12,17 @@ var SEND_MESSAGE_REPSONSE_PROTOCOL = [3]string{"CHAT", "CLIENT_NAME", "MESSAGE"}
 var LEAVE_CHATROOM_RESPONSE_PROTOCOL = [2]string{"LEFT_CHATROOM", "JOIN_ID"}
 
 
-type Groups struct {
-        groups []int
-    }
-
-// list of all chatrooms , each chatroom's index in the list is it's reference
-var chatRooms map[string]int
+// list of all chatRoomsRef , each chatroom's index in the list is it's reference
+var chatRoomsRef map[string]int
 
 // map of all users names, it's index is this user's join id
-var usersName map[string]int
+var userNamesJoinId map[string]int
 
 // list of all users' corresponding group,
-var usersCorrespondingGroup map[int]Groups
+var usersCorrespondingGroup map[string][]int
 
 // list of users' connection e.g users_conns[0].send(message)
-var usersConns map[int]net.Conn
+var usersConns map[string]net.Conn
 
 
 func RequestJoinChatroom(request string, clientConn net.Conn, port string) bool{
@@ -37,7 +33,7 @@ func RequestJoinChatroom(request string, clientConn net.Conn, port string) bool{
 	var clientName = strings.Split(requestLines[3], ":")[1]
 
 	//Join the chatroom
-	if (findChatroomIndex(roomName) == -1){
+	if _, exists := chatRoomsRef[roomName]; exists{
 		createChatroom(roomName)
 	}
 
@@ -77,7 +73,7 @@ func RequestLeavingChatroom(request string,clientConn net.Conn, serverPort strin
 	clientConn.Write([]byte(returnMessage))
 	message := fmt.Sprintf("CHAT:%s\nCLIENT_NAME:%s\nMESSAGE:%s has left chatroom.\n\n", roomRef, clientName, clientName)
 	broadCastWithinRoom(message, roomRef)
-	leaveChatroom(joinId, roomRef)
+	leaveChatroom(clientName, roomRef)
 	return true
 }
 
@@ -101,7 +97,7 @@ func RequestDisconnect(request string, clientConn net.Conn, serverPort string) b
 	// Parse request for essential information
 	requestLines := strings.Split(request, "\n")
 	clientName := strings.Split(requestLines[2], ":")[1]
-	joinId := userName[clientName]
+	joinId := userNamesJoinId[clientName]
 
 	fmt.Printf("Disconnection:")
 	fmt.Printf("Client:", clientName)
@@ -109,7 +105,7 @@ func RequestDisconnect(request string, clientConn net.Conn, serverPort string) b
 	// fmt.Printf("Room:", usersCorrespondingGroup[joinId])
 
 
-	for _, roomRef := range usersCorrespondingGroup[joinId]{
+	for _, roomRef := range usersCorrespondingGroup[clientName] {
 		message := fmt.Sprintf("CHAT:%s\nCLIENT_NAME:%s\nMESSAGE:%s has left chatroom.\n\n", roomRef, clientName, clientName)
 		broadCastWithinRoom(message, strconv.Itoa(roomRef))
 		leaveChatroom(strconv.Itoa(joinId), strconv.Itoa(roomRef))
@@ -130,39 +126,37 @@ func createChatroom(roomName string) {
 
 	// add new chatromm
 	fmt.Printf("Create CHATRoom", roomName)
-	chatRooms = append(chatRooms, roomName)
+	chatRoomsRef[roomName] = len(chatRoomsRef) - 1
 }
 
-func joinChatroom(roomName string, usersName string, clientConn net.Conn) (string, string){
+func joinChatroom(roomName string, userName string, clientConn net.Conn) (string, string){
 
 	//get the ref of the chat room
-	ref := chatRoom[roomName]
+	ref := chatRoomsRef[roomName]
 
 	//add new user
 	fmt.Println("User Conn:" + clientConn.LocalAddr().String() + "\n")
-	joinId := usersName[usersName]
+	joinId := userNamesJoinId[userName]
 
-	if (val, conn := usersConns[joinId]; conn) {
+	if _, exists := usersConns[userName]; exists {
 
 		// if user connection existis, then simply add new group to users chatroom record
 		fmt.Printf("Client Conn Exists")
-		usersCorrespondingGroup[joinId].groups = append(usersCorrespondingGroup[joinId].groups, ref)
+		usersCorrespondingGroup[userName] = append(usersCorrespondingGroup[userName], ref)
 
-	} else if (findUserIndex(userName) != -1) {
+	} else if _, exists := userNamesJoinId[userName]; exists {
 
 		// if user existis but user connection doesn't exists, then simply add new group and new connection to users chatroom record
 		fmt.Printf("Client Name exists")
-		usersCorrespondingGroup[joinId] = append(usersCorrespondingGroup[joinId], ref)
-		usersConns[joinId] = clientConn
+		usersCorrespondingGroup[userName] = append(usersCorrespondingGroup[userName], ref)
+		usersConns[userName] = clientConn
 
 	} else {
 
-		var newEmptyUserGroup []int
 		joinId = len(usersConns)
-		usersName = append(usersName, userName)
-		usersCorrespondingGroup = append(usersCorrespondingGroup, newEmptyUserGroup)
-		usersCorrespondingGroup[joinId] = append(usersCorrespondingGroup[joinId], ref)
-		usersConns = append(usersConns, clientConn)
+		userNamesJoinId[userName] = len(userNamesJoinId) - 1
+		usersCorrespondingGroup[userName] = append(usersCorrespondingGroup[userName], ref)
+		usersConns[userName] =  clientConn
 		fmt.Printf("Add new user %s with join id %d", userName, joinId)
 
 	}
@@ -175,11 +169,11 @@ func broadCastWithinRoom(message string, roomRef string) {
 	roomRefInt, _ :=  strconv.Atoi(roomRef)
 	fmt.Printf("\nBroadCast Room: %d\n", roomRef )
 
-	for index, conn := range usersConns {
-		fmt.Printf("JOIN ID: ", index )
-		fmt.Printf("Client: ", usersName[index] )
+	for uname, conn := range usersConns {
+		fmt.Printf("JOIN ID: ", uname )
+		fmt.Printf("Client: ", userNamesJoinId[uname] )
 
-		for _, group := range usersCorrespondingGroup[index] {
+		for _, group := range usersCorrespondingGroup[uname] {
 			
 			if (roomRefInt == group) {
 				conn.Write([]byte(message))
@@ -189,46 +183,16 @@ func broadCastWithinRoom(message string, roomRef string) {
 	}
 }
 
+func leaveChatroom(clientName string, room string) {
 
-func findUserConnIndex(userConn net.Conn) int {
-
-	for index, conn := range usersConns {
-		if strings.Compare(conn.LocalAddr().String(), userConn.LocalAddr().String())== 1 {
-			return index
-		}
-	}
-	return -1
-}
-
-func findChatroomIndex(roomName string) int {
-	for ref, name := range chatRooms {
-		if strings.Compare(name, roomName)== 1 {
-			return ref
-		}
-	}
-	return -1
-}
-
-func findUserIndex(userName string) int {
-	for ref, name := range usersName {
-		if strings.Compare(userName, name)== 1 {
-			return ref
-		}
-	}
-	return -1
-}
-
-func leaveChatroom(clientId string, room string) {
-
-	clientIdInt, _ := strconv.Atoi(clientId)
 	roomInt, _ := strconv.Atoi(room)
 	var newUserGroup []int
-	for ref, _ := range usersCorrespondingGroup[clientIdInt] {
+	for ref, _ := range usersCorrespondingGroup[clientName] {
 		if (ref != roomInt) {
 			newUserGroup = append(newUserGroup, ref)
 		}
 	}
-	usersCorrespondingGroup[clientIdInt] = newUserGroup
+	usersCorrespondingGroup[clientName] = newUserGroup
 }
 
 func getIpAddress() string{
