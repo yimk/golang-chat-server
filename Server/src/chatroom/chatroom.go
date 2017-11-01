@@ -33,7 +33,7 @@ func RequestJoinChatroom(request string, clientConn net.Conn, port string) bool{
 	var clientName = strings.Split(requestLines[3], ":")[1]
 
 	//Join the chatroom
-	if _, exists := chatRoomsRef[roomName]; exists{
+	if _, exists := chatRoomsRef[roomName]; !exists{
 		createChatroom(roomName)
 	}
 
