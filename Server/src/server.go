@@ -10,15 +10,20 @@ import (
 
 const (
 	CONN_HOST = "localhost"
-	CONN_PORT = "8070"
+
 	CONN_TYPE = "tcp"
 	MAX_DATA_RECV = 9999
 	BACKLOG = 50
 	IP = "134.226.214.254"
 )
 
+var (
+	CONN_PORT = "8070"
+)
+
 func main() {
 
+	CONN_PORT = os.Args[1]
 	fmt.Println("Start!\nIP:", getIpAddress())
 
 	// Listen for incoming connections.
