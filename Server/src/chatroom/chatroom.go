@@ -13,16 +13,16 @@ var LEAVE_CHATROOM_RESPONSE_PROTOCOL = [2]string{"LEFT_CHATROOM", "JOIN_ID"}
 
 
 // list of all chatRoomsRef , each chatroom's index in the list is it's reference
-var chatRoomsRef map[string]int
+var chatRoomsRef = make(map[string]int)
 
 // map of all users names, it's index is this user's join id
-var userNamesJoinId map[string]int
+var userNamesJoinId = make(map[string]int)
 
 // list of all users' corresponding group,
-var usersCorrespondingGroup map[string][]int
+var usersCorrespondingGroup = make(map[string][]int)
 
 // list of users' connection e.g users_conns[0].send(message)
-var usersConns map[string]net.Conn
+var usersConns = make(map[string]net.Conn)
 
 
 func RequestJoinChatroom(request string, clientConn net.Conn, port string) bool{
@@ -126,7 +126,7 @@ func createChatroom(roomName string) {
 
 	// add new chatromm
 	fmt.Printf("Create CHATRoom", roomName)
-	chatRoomsRef[roomName] = len(chatRoomsRef) - 1
+	chatRoomsRef[roomName] = len(chatRoomsRef)
 }
 
 func joinChatroom(roomName string, userName string, clientConn net.Conn) (string, string){
@@ -154,7 +154,7 @@ func joinChatroom(roomName string, userName string, clientConn net.Conn) (string
 	} else {
 
 		joinId = len(usersConns)
-		userNamesJoinId[userName] = len(userNamesJoinId) - 1
+		userNamesJoinId[userName] = len(userNamesJoinId)
 		usersCorrespondingGroup[userName] = append(usersCorrespondingGroup[userName], ref)
 		usersConns[userName] =  clientConn
 		fmt.Printf("Add new user %s with join id %d", userName, joinId)

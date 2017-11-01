@@ -104,7 +104,7 @@ func handleRequest(conn net.Conn) {
 
    	}
 
-   	fmt.Printf("Task Complete")
+   	fmt.Printf("Task Complete\n")
    	conn.Close()
 
 }
