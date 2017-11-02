@@ -43,69 +43,80 @@ func main() {
 		}
 		go handleRequest(conn)
 	}
-	
+
+}
+
+func handleRequest(conn net.Conn) {
+
+	for {
+		// Make a buffer to hold incoming data.
+		buf := make([]byte, MAX_DATA_RECV)
+
+		// Read the incoming connection into the request.
+		reqLen, err := conn.Read(buf)
+		request := string(buf[:reqLen])
+
+		if err != nil {
+			fmt.Println("Error reading:", err.Error())
+		}
+
+		fmt.Println(request)
+		processRequest(conn, request)
+	}
+
 }
 
 
 // Handles incoming requests.
-func handleRequest(conn net.Conn) {
+func processRequest(conn net.Conn, request string) {
 
-  	// Make a buffer to hold incoming data.
-  	buf := make([]byte, MAX_DATA_RECV)
 
-  	// Read the incoming connection into the request.
-  	reqLen, err := conn.Read(buf)
-	request := string(buf[:reqLen])
 
-  	if err != nil {
-		fmt.Println("Error reading:", err.Error())
-  	}
 
-  	if(strings.Compare(request, "KILL_SERVICE\n") == 1) {
+	if(request == "KILL_SERVICE\n") {
 
-	  	fmt.Printf("Kill the service\n" )
-	  	chatroom.Kill()
-	  	conn.Close()
+		fmt.Printf("Kill the service\n" )
+		chatroom.Kill()
+		conn.Close()
 
-   	} else if(strings.Compare(request, "HELO text\n") == 1) {
+	} else if(request == "HELO BASE_TEST\n") {
 
-   		fmt.Printf("Send back Hello\n" )
-   		//"HELO text\nIP:[ip address]\nPort:[port number]\nStudentID:[your student ID]\n"
+		fmt.Printf("Send back Hello\n" )
+		//"HELO text\nIP:[ip address]\nPort:[port number]\nStudentID:[your student ID]\n"
 		ip := getIpAddress()
-		returnMessage := "HELO text\nIP::" + ip + "\nPort:" + port + "\nStudentID:" + "13329643" + "\n"
+		returnMessage := "HELO BASE_TEST\nIP:" + ip + "\nPort:" + port + "\nStudentID:" + "13329643" + "\n"
 		fmt.Printf(returnMessage)
 		conn.Write([]byte(returnMessage))
-		fmt.Printf(request)
 
-   	} else if(strings.Contains(request, "JOIN_CHATROOM")) {
+	} else if(strings.Contains(request, "JOIN_CHATROOM")) {
 
-   		fmt.Printf("It is a JOIN CHATROOM REQUEST\n") 
+		fmt.Printf("It is a JOIN CHATROOM REQUEST\n")
 		chatroom.RequestJoinChatroom(request, conn, port)
 
-   	} else if(strings.Contains(request, "LEAVE_CHATROOM")) {
+	} else if(strings.Contains(request, "LEAVE_CHATROOM")) {
 
-   		fmt.Printf("It is a LEAVE CHATROOM REQUEST\n") 
+		fmt.Printf("It is a LEAVE CHATROOM REQUEST\n")
 		chatroom.RequestLeavingChatroom(request, conn, port)
 
-   	} else if(strings.Contains(request, "CHAT")) {
+	} else if(strings.Contains(request, "CHAT")) {
 
-   		fmt.Printf("It is a JOIN CHATROOM REQUEST\n") 
+		fmt.Printf("It is a JOIN CHATROOM REQUEST\n")
 		chatroom.RequestSendMessage(request, conn, port)
 
-   	} else if(strings.Compare(request, "DISCONNECT") == 1) {
+	} else if(strings.Contains(request, "DISCONNECT")) {
 
-   		fmt.Printf("It is a LEAVE CHATROOM REQUEST\n") 
+		fmt.Printf("It is a LEAVE CHATROOM REQUEST\n")
 		chatroom.RequestDisconnect(request, conn, port)
 
-   	} else {
+	} else {
 
-   		fmt.Printf("Nothing interesting\n")
-   		conn.Write([]byte("Nothing interesting."))
+		fmt.Printf("Nothing interesting\n")
+		conn.Write([]byte("Nothing interesting."))
 
-   	}
+	}
 
-   	fmt.Printf("Task Complete\n")
-   	conn.Close()
+	fmt.Printf("Task Complete\n")
+	fmt.Printf("---------------------------------------------\n\n\n")
 
 }
 
@@ -130,28 +141,3 @@ func getIpAddress() string{
 	}
 	return ""
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

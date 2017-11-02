@@ -106,7 +106,7 @@ func RequestDisconnect(request string, clientConn net.Conn, serverPort string) b
 
 
 	for _, roomRef := range usersCorrespondingGroup[clientName] {
-		message := fmt.Sprintf("CHAT:%s\nCLIENT_NAME:%s\nMESSAGE:%s has left chatroom.\n\n", roomRef, clientName, clientName)
+		message := fmt.Sprintf("CHAT:%d\nCLIENT_NAME:%s\nMESSAGE:%s has left chatroom.\n\n", roomRef, clientName, clientName)
 		broadCastWithinRoom(message, strconv.Itoa(roomRef))
 		leaveChatroom(strconv.Itoa(joinId), strconv.Itoa(roomRef))
 	}
@@ -166,18 +166,21 @@ func joinChatroom(roomName string, userName string, clientConn net.Conn) (string
 
 func broadCastWithinRoom(message string, roomRef string) {
 
-	roomRefInt, _ :=  strconv.Atoi(roomRef)
-	fmt.Printf("\nBroadCast Room: %d\n", roomRef )
+	fmt.Printf("BroadCasting:\n", message, "\n" )
+
+	fmt.Printf("Who is leaving?: " + roomRef + "\n")
+	roomRef = strings.Replace(roomRef, " ", "", -1)
+	roomRefInt, _ := strconv.Atoi(roomRef)
 
 	for uname, conn := range usersConns {
-		fmt.Printf("JOIN ID: ", uname )
-		fmt.Printf("Client: ", userNamesJoinId[uname] )
-
+		fmt.Printf("JOIN ID: " + uname + "\n" )
+		fmt.Printf("Client: " + strconv.Itoa(userNamesJoinId[uname]) + "\n")
 		for _, group := range usersCorrespondingGroup[uname] {
-			
-			if (roomRefInt == group) {
+
+			fmt.Printf("Group: " + strconv.Itoa(group) + "roomRef: " + strconv.Itoa(roomRefInt) + "\n")
+			if (group - roomRefInt == 0) {
+				fmt.Printf("Broadcasting to: " + strconv.Itoa(group) + "\n")
 				conn.Write([]byte(message))
-				break
 			}
 		}
 	}
