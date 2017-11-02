@@ -108,8 +108,12 @@ func RequestDisconnect(request string, clientConn net.Conn, serverPort string) b
 	for _, roomRef := range usersCorrespondingGroup[clientName] {
 		message := fmt.Sprintf("CHAT:%d\nCLIENT_NAME:%s\nMESSAGE:%s has left chatroom.\n\n", roomRef, clientName, clientName)
 		broadCastWithinRoom(message, strconv.Itoa(roomRef))
-		leaveChatroom(strconv.Itoa(joinId), strconv.Itoa(roomRef))
 	}
+	usersConns[clientName].Close()
+	delete( usersCorrespondingGroup, clientName)
+	delete( chatRoomsRef, clientName)
+	delete( userNamesJoinId, clientName)
+	delete( usersConns, clientName)
 
 	return true
 }
@@ -193,7 +197,10 @@ func leaveChatroom(clientName string, room string) {
 	for ref, _ := range usersCorrespondingGroup[clientName] {
 		if (ref != roomInt) {
 			newUserGroup = append(newUserGroup, ref)
+		} else {
+			fmt.Printf(clientName + " is leaving " + room + "\n")
 		}
+
 	}
 	usersCorrespondingGroup[clientName] = newUserGroup
 }

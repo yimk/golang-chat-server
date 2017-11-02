@@ -56,12 +56,10 @@ func handleRequest(conn net.Conn) {
 		reqLen, err := conn.Read(buf)
 		request := string(buf[:reqLen])
 
-		if err != nil {
-			fmt.Println("Error reading:", err.Error())
+		if err == nil {
+			fmt.Println(request)
+			processRequest(conn, request)
 		}
-
-		fmt.Println(request)
-		processRequest(conn, request)
 	}
 
 }
@@ -100,12 +98,12 @@ func processRequest(conn net.Conn, request string) {
 
 	} else if(strings.Contains(request, "CHAT")) {
 
-		fmt.Printf("It is a JOIN CHATROOM REQUEST\n")
+		fmt.Printf("It is a CHAT REQUEST\n")
 		chatroom.RequestSendMessage(request, conn, port)
 
 	} else if(strings.Contains(request, "DISCONNECT")) {
 
-		fmt.Printf("It is a LEAVE CHATROOM REQUEST\n")
+		fmt.Printf("It is a Disconnect REQUEST\n")
 		chatroom.RequestDisconnect(request, conn, port)
 
 	} else {
